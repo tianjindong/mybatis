@@ -21,6 +21,7 @@ import java.util.logging.Logger;
 import org.apache.ibatis.logging.Log;
 
 /**
+ * JDK内置日志框架的适配器，用于适配MyBatis内部约定的Log接口
  * @author Clinton Begin
  */
 public class Jdk14LoggingImpl implements Log {

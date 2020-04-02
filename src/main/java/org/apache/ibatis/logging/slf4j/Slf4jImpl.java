@@ -22,6 +22,7 @@ import org.slf4j.Marker;
 import org.slf4j.spi.LocationAwareLogger;
 
 /**
+ * Slf4j日志框架的适配器，用于适配MyBatis内部约定的Log接口
  * @author Clinton Begin
  * @author Eduardo Macarron
  */
@@ -30,6 +31,7 @@ public class Slf4jImpl implements Log {
   private Log log;
 
   public Slf4jImpl(String clazz) {
+    //如果项目中没有Slf4j的依赖，这里使用LoggerFactory获取日志对象会抛ClassNotFoundException异常
     Logger logger = LoggerFactory.getLogger(clazz);
 
     if (logger instanceof LocationAwareLogger) {

@@ -1,23 +1,25 @@
 /**
- *    Copyright 2009-2020 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * Copyright 2009-2020 the original author or authors.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.apache.ibatis.logging;
 
 import java.lang.reflect.Constructor;
 
 /**
+ * 日志工厂类
+ *
  * @author Clinton Begin
  * @author Eduardo Macarron
  */
@@ -28,9 +30,13 @@ public final class LogFactory {
    */
   public static final String MARKER = "MYBATIS";
 
+  /**
+   * 用于保存扫描到的第一个日志框架的构造器
+   */
   private static Constructor<? extends Log> logConstructor;
 
   static {
+    //按照顺序扫描当前项目中配置的日志框架。注：双冒号是JDK8的语法，代表方法引用（语法糖）
     tryImplementation(LogFactory::useSlf4jLogging);
     tryImplementation(LogFactory::useCommonsLogging);
     tryImplementation(LogFactory::useLog4J2Logging);
@@ -39,6 +45,9 @@ public final class LogFactory {
     tryImplementation(LogFactory::useNoLogging);
   }
 
+  /**
+   * 私有化构造器，防止用户实例该类
+   */
   private LogFactory() {
     // disable construction
   }
@@ -55,6 +64,11 @@ public final class LogFactory {
     }
   }
 
+  /**
+   * 提供一个扩展方法，允许用户使用其他私有化日志实现，只要实现类Log接口即可
+   *
+   * @param clazz
+   */
   public static synchronized void useCustomLogging(Class<? extends Log> clazz) {
     setImplementation(clazz);
   }
@@ -88,6 +102,7 @@ public final class LogFactory {
   }
 
   private static void tryImplementation(Runnable runnable) {
+    //如果前面的适配器都没有创建成功，则试图创建当前类型的适配器
     if (logConstructor == null) {
       try {
         runnable.run();
@@ -97,9 +112,15 @@ public final class LogFactory {
     }
   }
 
+  /**
+   * 设置具体的日志实现类构造器
+   *
+   * @param implClass
+   */
   private static void setImplementation(Class<? extends Log> implClass) {
     try {
       Constructor<? extends Log> candidate = implClass.getConstructor(String.class);
+      //这里调用目标日志框架的适配器中的构造器，试图创建适配器对象，如果没有该框架的依赖则会抛出异常
       Log log = candidate.newInstance(LogFactory.class.getName());
       if (log.isDebugEnabled()) {
         log.debug("Logging initialized using '" + implClass + "' adapter.");

@@ -1,17 +1,17 @@
 /**
- *    Copyright 2009-2019 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * Copyright 2009-2019 the original author or authors.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.apache.ibatis.logging.jdbc;
 
@@ -33,21 +33,26 @@ import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.reflection.ArrayUtil;
 
 /**
- * Base class for proxies to do logging.
+ * MyBatis用于输出执行器SQL日志记录的基类。
  *
  * @author Clinton Begin
  * @author Eduardo Macarron
  */
 public abstract class BaseJdbcLogger {
-
+  //保存PreparedStatement中常用的set方法（用于占位符设值的方法）
   protected static final Set<String> SET_METHODS;
+  //保存PreparedStatement中常用的执行SQL语句的方法
   protected static final Set<String> EXECUTE_METHODS = new HashSet<>();
 
+  //保存PreparedStatement中set方法的键值对
   private final Map<Object, Object> columnMap = new HashMap<>();
 
+  //保存PreparedStatement中set方法的key值
   private final List<Object> columnNames = new ArrayList<>();
+  //保存PreparedStatement中set方法的value值
   private final List<Object> columnValues = new ArrayList<>();
 
+  //用于打印日志的对象
   protected final Log statementLog;
   protected final int queryStack;
 
@@ -65,10 +70,10 @@ public abstract class BaseJdbcLogger {
 
   static {
     SET_METHODS = Arrays.stream(PreparedStatement.class.getDeclaredMethods())
-            .filter(method -> method.getName().startsWith("set"))
-            .filter(method -> method.getParameterCount() > 1)
-            .map(Method::getName)
-            .collect(Collectors.toSet());
+      .filter(method -> method.getName().startsWith("set"))
+      .filter(method -> method.getParameterCount() > 1)
+      .map(Method::getName)
+      .collect(Collectors.toSet());
 
     EXECUTE_METHODS.add("execute");
     EXECUTE_METHODS.add("executeUpdate");

@@ -1,17 +1,17 @@
 /**
- *    Copyright 2009-2020 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * Copyright 2009-2020 the original author or authors.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.apache.ibatis.logging.jdbc;
 
@@ -26,14 +26,14 @@ import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.reflection.ExceptionUtil;
 
 /**
- * Connection proxy to add logging.
+ * 负责打印数据库连接相关信息和SQL语句，并创建PreparedStatementLogger
  *
  * @author Clinton Begin
  * @author Eduardo Macarron
- *
  */
 public final class ConnectionLogger extends BaseJdbcLogger implements InvocationHandler {
 
+  //真正的连接对象
   private final Connection connection;
 
   private ConnectionLogger(Connection conn, Log statementLog, int queryStack) {
@@ -43,16 +43,21 @@ public final class ConnectionLogger extends BaseJdbcLogger implements Invocation
 
   @Override
   public Object invoke(Object proxy, Method method, Object[] params)
-      throws Throwable {
+    throws Throwable {
     try {
+      //如果调用的是Object的方法则跳过代理
       if (Object.class.equals(method.getDeclaringClass())) {
         return method.invoke(this, params);
       }
+      //如果是调用prepareStatement或者prepareCall，则打印SQL语句
       if ("prepareStatement".equals(method.getName()) || "prepareCall".equals(method.getName())) {
         if (isDebugEnabled()) {
           debug(" Preparing: " + removeBreakingWhitespace((String) params[0]), true);
         }
         PreparedStatement stmt = (PreparedStatement) method.invoke(connection, params);
+        /**
+         * 创建PreparedStatement的代理类PreparedStatementLogger对象，并返回这个对象
+         */
         stmt = PreparedStatementLogger.newInstance(stmt, statementLog, queryStack);
         return stmt;
       } else if ("createStatement".equals(method.getName())) {
@@ -70,12 +75,9 @@ public final class ConnectionLogger extends BaseJdbcLogger implements Invocation
   /**
    * Creates a logging version of a connection.
    *
-   * @param conn
-   *          the original connection
-   * @param statementLog
-   *          the statement log
-   * @param queryStack
-   *          the query stack
+   * @param conn         the original connection
+   * @param statementLog the statement log
+   * @param queryStack   the query stack
    * @return the connection with logging
    */
   public static Connection newInstance(Connection conn, Log statementLog, int queryStack) {

@@ -122,9 +122,9 @@ public final class ResultSetLogger extends BaseJdbcLogger implements InvocationH
    * Creates a logging version of a ResultSet.
    *
    * @param rs
-   *          the ResultSet to proxy
+   *          被代理的结果集
    * @param statementLog
-   *          the statement log
+   *         日志对象
    * @param queryStack
    *          the query stack
    * @return the ResultSet with logging
