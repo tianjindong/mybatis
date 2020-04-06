@@ -38,9 +38,9 @@ import org.apache.ibatis.io.Resources;
  */
 public class UnpooledDataSource implements DataSource {
 
-  private ClassLoader driverClassLoader;
-  private Properties driverProperties;
-  private static Map<String, Driver> registeredDrivers = new ConcurrentHashMap<>();
+  private ClassLoader driverClassLoader;//驱动类的类加载器
+  private Properties driverProperties;//数据库连接的相关信息
+  private static Map<String, Driver> registeredDrivers = new ConcurrentHashMap<>();//缓存已注册的数据库驱动类
 
   private String driver;
   private String url;
@@ -220,17 +220,25 @@ public class UnpooledDataSource implements DataSource {
   }
 
   private Connection doGetConnection(Properties properties) throws SQLException {
+    //初始化驱动
     initializeDriver();
+    //获取连接
     Connection connection = DriverManager.getConnection(url, properties);
+    //配置连接
     configureConnection(connection);
     return connection;
   }
 
+  /**
+   * 初始化驱动
+   * @throws SQLException
+   */
   private synchronized void initializeDriver() throws SQLException {
     if (!registeredDrivers.containsKey(driver)) {
       Class<?> driverType;
       try {
         if (driverClassLoader != null) {
+          //加载驱动，在驱动类被虚拟机初始化的时候会调用驱动类中的静态代码块注册驱动
           driverType = Class.forName(driver, true, driverClassLoader);
         } else {
           driverType = Resources.classForName(driver);
@@ -238,6 +246,7 @@ public class UnpooledDataSource implements DataSource {
         // DriverManager requires the driver to be loaded via the system ClassLoader.
         // http://www.kfu.com/~nsayer/Java/dyn-jdbc.html
         Driver driverInstance = (Driver) driverType.getDeclaredConstructor().newInstance();
+        //注册驱动，实际上面加载驱动的步骤就会触发驱动的注册（详见com.mysql.jdbc.Driver静态代码块）
         DriverManager.registerDriver(new DriverProxy(driverInstance));
         registeredDrivers.put(driver, driverInstance);
       } catch (Exception e) {
@@ -246,13 +255,21 @@ public class UnpooledDataSource implements DataSource {
     }
   }
 
+  /**
+   * 配置连接对象
+   * @param conn
+   * @throws SQLException
+   */
   private void configureConnection(Connection conn) throws SQLException {
+    //设置超时时间
     if (defaultNetworkTimeout != null) {
       conn.setNetworkTimeout(Executors.newSingleThreadExecutor(), defaultNetworkTimeout);
     }
+    //设置事务的制动提交
     if (autoCommit != null && autoCommit != conn.getAutoCommit()) {
       conn.setAutoCommit(autoCommit);
     }
+    //设置事务的传播行为
     if (defaultTransactionIsolationLevel != null) {
       conn.setTransactionIsolation(defaultTransactionIsolationLevel);
     }

@@ -25,6 +25,7 @@ import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.SystemMetaObject;
 
 /**
+ * 未使用连接池的数据源工厂
  * @author Clinton Begin
  */
 public class UnpooledDataSourceFactory implements DataSourceFactory {
@@ -44,6 +45,8 @@ public class UnpooledDataSourceFactory implements DataSourceFactory {
     MetaObject metaDataSource = SystemMetaObject.forObject(dataSource);
     for (Object key : properties.keySet()) {
       String propertyName = (String) key;
+      //作为可选项,你可以传递数据库驱动的属性。要这样做,属性的前缀是以“driver.”开 头的,例如
+      //driver.encoding=UTF8
       if (propertyName.startsWith(DRIVER_PROPERTY_PREFIX)) {
         String value = properties.getProperty(propertyName);
         driverProperties.setProperty(propertyName.substring(DRIVER_PROPERTY_PREFIX_LENGTH), value);
@@ -60,6 +63,10 @@ public class UnpooledDataSourceFactory implements DataSourceFactory {
     }
   }
 
+  /**
+   * 一个工厂类返回的所有DataSource是同一个，这也从侧面证明DataSource是线程安全的
+   * @return
+   */
   @Override
   public DataSource getDataSource() {
     return dataSource;

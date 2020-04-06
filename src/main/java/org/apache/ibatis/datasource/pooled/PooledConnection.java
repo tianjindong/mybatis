@@ -24,6 +24,7 @@ import java.sql.SQLException;
 import org.apache.ibatis.reflection.ExceptionUtil;
 
 /**
+ * 实现InvocationHandler说明该类是一个动态代理类
  * @author Clinton Begin
  */
 class PooledConnection implements InvocationHandler {
@@ -32,13 +33,21 @@ class PooledConnection implements InvocationHandler {
   private static final Class<?>[] IFACES = new Class<?>[] { Connection.class };
 
   private final int hashCode;
+  //当前连接所属的数据源，最后会归还至该数据源
   private final PooledDataSource dataSource;
+  //真正的连接对象
   private final Connection realConnection;
+  //代理的连接对象
   private final Connection proxyConnection;
+  //从数据源中取出来的时间戳
   private long checkoutTimestamp;
+  //连接创建的时间戳
   private long createdTimestamp;
+  //连接最后一次使用的时间戳
   private long lastUsedTimestamp;
+  //根据数据库URL、用户名、密码生成一个Hash值，唯一标识一个连接池
   private int connectionTypeCode;
+  //连接是否有效
   private boolean valid;
 
   /**
@@ -243,15 +252,21 @@ class PooledConnection implements InvocationHandler {
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     String methodName = method.getName();
     if (CLOSE.equals(methodName)) {
+      //如果用户调用的是close方法,则将调用PooledDataSource中的pushConnection方法
       dataSource.pushConnection(this);
       return null;
     }
     try {
       if (!Object.class.equals(method.getDeclaringClass())) {
+        /**
+         * 如果调用的不是Object的方法，则检查该连接是否有效，如果无效则抛出异常，
+         * 这也是PooledDataSource.getConnection当没有空闲连接，将超时连接作废机制的关键
+         */
         // issue #579 toString() should never fail
         // throw an SQLException instead of a Runtime
         checkConnection();
       }
+      //调用被代理的Connection中的方法
       return method.invoke(realConnection, args);
     } catch (Throwable t) {
       throw ExceptionUtil.unwrapThrowable(t);

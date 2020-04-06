@@ -20,12 +20,21 @@ import java.util.Properties;
 import javax.sql.DataSource;
 
 /**
+ * 数据源工厂类的抽象接口，它有两个实现类：UnpooledDataSourceFactory、PooledDataSourceFactory
  * @author Clinton Begin
  */
 public interface DataSourceFactory {
 
+  /**
+   * 设置数据源属性
+   * @param props
+   */
   void setProperties(Properties props);
 
+  /**
+   * 获取数据源
+   * @return
+   */
   DataSource getDataSource();
 
 }
