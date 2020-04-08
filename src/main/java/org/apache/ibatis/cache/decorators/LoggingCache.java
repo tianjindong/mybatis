@@ -20,14 +20,18 @@ import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 
 /**
- * @author Clinton Begin
+ * 缓存的日志装饰器，用于输出缓存命中率
  */
 public class LoggingCache implements Cache {
 
-  private final Log log;
-  private final Cache delegate;
-  protected int requests = 0;
-  protected int hits = 0;
+  private final Log log; //日志对象
+  private final Cache delegate; //被装饰对象
+
+  /**
+   *  hits/requests用于计算缓存命中率
+   */
+  protected int requests = 0; //请求数
+  protected int hits = 0; //缓存命中的次数
 
   public LoggingCache(Cache delegate) {
     this.delegate = delegate;
@@ -51,12 +55,13 @@ public class LoggingCache implements Cache {
 
   @Override
   public Object getObject(Object key) {
-    requests++;
+    requests++; //请求数+1
     final Object value = delegate.getObject(key);
     if (value != null) {
       hits++;
     }
     if (log.isDebugEnabled()) {
+      //如果是debug模式则输出缓存命中率
       log.debug("Cache Hit Ratio [" + getId() + "]: " + getHitRatio());
     }
     return value;

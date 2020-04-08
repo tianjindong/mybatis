@@ -39,18 +39,22 @@ import java.util.concurrent.locks.ReadWriteLock;
  * @author Clinton Begin
  */
 
+/**
+ * MyBatis缓存模块采用装饰器模式
+ */
 public interface Cache {
 
   /**
-   * @return The identifier of this cache
+   * @return 获取这个缓存的ID
    */
   String getId();
 
   /**
+   * 存入数据
    * @param key
-   *          Can be any object but usually it is a {@link CacheKey}
+   *          key可以是任何对象，但通常是 {@link CacheKey}
    * @param value
-   *          The result of a select.
+   *          数据
    */
   void putObject(Object key, Object value);
 
@@ -97,6 +101,7 @@ public interface Cache {
    *
    * @return A ReadWriteLock
    */
+  //获取读写锁。从3.2.6开始，这个方法不再被核心调用
   default ReadWriteLock getReadWriteLock() {
     return null;
   }

@@ -18,7 +18,7 @@ package org.apache.ibatis.cache.decorators;
 import org.apache.ibatis.cache.Cache;
 
 /**
- * @author Clinton Begin
+ * 同步装饰器，用于保证缓存的更新操作是线程安全的
  */
 public class SynchronizedCache implements Cache {
 

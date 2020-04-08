@@ -23,7 +23,7 @@ import java.util.LinkedList;
 import org.apache.ibatis.cache.Cache;
 
 /**
- * Weak Reference cache decorator.
+ * 弱引用缓存装饰器。（弱引用：它的强度比软引用更弱一些，被弱引用关联的对象，在垃圾回收时，如果这个对象只被弱引用关联（没有任何强引用关联他），那么这个对象就会被回收）
  * Thanks to Dr. Heinz Kabutz for his guidance here.
  *
  * @author Clinton Begin

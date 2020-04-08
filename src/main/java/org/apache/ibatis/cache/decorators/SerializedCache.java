@@ -29,6 +29,7 @@ import org.apache.ibatis.cache.CacheException;
 import org.apache.ibatis.io.Resources;
 
 /**
+ * 缓存值序列化装饰器。将对象存存入缓存之前将对象序列化为字节数组存入缓存，在get时反序列化为对象
  * @author Clinton Begin
  */
 public class SerializedCache implements Cache {

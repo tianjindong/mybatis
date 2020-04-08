@@ -23,7 +23,7 @@ import java.util.LinkedList;
 import org.apache.ibatis.cache.Cache;
 
 /**
- * Soft Reference cache decorator
+ * 软引用缓存装饰器。（软引用：对于软引用关联着的对象，在系统将要发生内存溢出异常之前，将会把这些对象纳入回收范围进行第二次回收。如果这次回收还没有足够的内存，才会抛出内存溢出异常。）
  * Thanks to Dr. Heinz Kabutz for his guidance here.
  *
  * @author Clinton Begin

@@ -25,6 +25,10 @@ import org.apache.ibatis.reflection.ArrayUtil;
 /**
  * @author Clinton Begin
  */
+/**
+ * 缓存key
+ * MyBatis 对于其 Key 的生成采取规则为：[mappedStementId + offset + limit + SQL + queryParams + environment]生成一个哈希码
+ */
 public class CacheKey implements Cloneable, Serializable {
 
   private static final long serialVersionUID = 1146682552656046210L;
@@ -45,10 +49,10 @@ public class CacheKey implements Cloneable, Serializable {
   private static final int DEFAULT_MULTIPLIER = 37;
   private static final int DEFAULT_HASHCODE = 17;
 
-  private final int multiplier;
-  private int hashcode;
-  private long checksum;
-  private int count;
+  private final int multiplier;//参与hash计算的乘数
+  private int hashcode; //当前CacheKey的HashCode
+  private long checksum; //校验和
+  private int count; //updateList的元素个数
   // 8/21/2017 - Sonarlint flags this as needing to be marked transient. While true if content is not serializable, this
   // is not always true and thus should not be marked transient.
   private List<Object> updateList;
@@ -72,11 +76,11 @@ public class CacheKey implements Cloneable, Serializable {
   public void update(Object object) {
     int baseHashCode = object == null ? 1 : ArrayUtil.hashCode(object);
 
-    count++;
-    checksum += baseHashCode;
+    count++; //updateList中的size +1
+    checksum += baseHashCode;//计算校验和
     baseHashCode *= count;
 
-    hashcode = multiplier * hashcode + baseHashCode;
+    hashcode = multiplier * hashcode + baseHashCode; //更新Hash值
 
     updateList.add(object);
   }
@@ -98,6 +102,9 @@ public class CacheKey implements Cloneable, Serializable {
 
     final CacheKey cacheKey = (CacheKey) object;
 
+    /**
+     * 这三个值都相同equals才有可能相同，目的是快速剔除大部分不相同的对象
+     */
     if (hashcode != cacheKey.hashcode) {
       return false;
     }
@@ -108,6 +115,7 @@ public class CacheKey implements Cloneable, Serializable {
       return false;
     }
 
+    //经过上面三个元素的筛选，说明这两个对象极大可能相等，这里进行最后的判断
     for (int i = 0; i < updateList.size(); i++) {
       Object thisObject = updateList.get(i);
       Object thatObject = cacheKey.updateList.get(i);

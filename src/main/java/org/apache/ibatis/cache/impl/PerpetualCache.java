@@ -22,12 +22,14 @@ import org.apache.ibatis.cache.Cache;
 import org.apache.ibatis.cache.CacheException;
 
 /**
+ * MyBatis缓存的核心实现类。类似于IO中的FileInputStream（JDK中的IO同样采用装饰器模式）
  * @author Clinton Begin
  */
 public class PerpetualCache implements Cache {
-
+  //每一个缓存都有一个唯一ID
   private final String id;
 
+  //缓存底层使用HashMap保存数据，所以单独的PerpetualCache实例是不支持多线程的，而decorators包中提供的装饰器可以将其包装为Blocking
   private final Map<Object, Object> cache = new HashMap<>();
 
   public PerpetualCache(String id) {
