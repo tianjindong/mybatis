@@ -74,7 +74,8 @@ public class Reflector {
     addGetMethods(clazz);
     //加入setter方法
     addSetMethods(clazz);
-    //加入字段
+    //如果对应的字段没有Setter和Getter方法，则创建一个SetFieldInvoker和GetFieldInvoker放入setMethods中
+    //也就是说MyBatis里面的封装实体哪怕没有Setter方法也能注入值
     addFields(clazz);
     readablePropertyNames = getMethods.keySet().toArray(new String[0]);
     writablePropertyNames = setMethods.keySet().toArray(new String[0]);
@@ -150,6 +151,7 @@ public class Reflector {
     Method[] methods = getClassMethods(clazz);
     Arrays.stream(methods).filter(m -> m.getParameterTypes().length == 1 && PropertyNamer.isSetter(m.getName()))
       .forEach(m -> addMethodConflict(conflictingSetters, PropertyNamer.methodToProperty(m.getName()), m));
+
     resolveSetterConflicts(conflictingSetters);
   }
 
@@ -238,31 +240,47 @@ public class Reflector {
     Field[] fields = clazz.getDeclaredFields();
     for (Field field : fields) {
       if (!setMethods.containsKey(field.getName())) {
+        // 如果不存在这个字段的setter方法
+
         // issue #379 - removed the check for final because JDK 1.5 allows
         // modification of final fields through reflection (JSR-133). (JGB)
         // pr #16 - final static can only be set by the classloader
+        //获取方法的修饰符
         int modifiers = field.getModifiers();
         if (!(Modifier.isFinal(modifiers) && Modifier.isStatic(modifiers))) {
+          //如果该字段没有用final和static修饰
+          //如果没有setter方法，则生成一个setter代理，放入setMethods集合中
           addSetField(field);
         }
       }
       if (!getMethods.containsKey(field.getName())) {
+        //如果没有getter方法，则生成一个getter代理，放入getMethods集合中
         addGetField(field);
       }
     }
     if (clazz.getSuperclass() != null) {
+      //如果这个类还有父类方法，则进行递归注入父类中的字段
       addFields(clazz.getSuperclass());
     }
   }
 
+  /**
+   * 为指定的字段向setMethods集合添加一个Setter代理（SetFieldInvoker）
+   * @param field
+   */
   private void addSetField(Field field) {
     if (isValidPropertyName(field.getName())) {
+      //如果是有效的属性名，则添加一个代理的Set方法
       setMethods.put(field.getName(), new SetFieldInvoker(field));
       Type fieldType = TypeParameterResolver.resolveFieldType(field, type);
       setTypes.put(field.getName(), typeToClass(fieldType));
     }
   }
 
+  /**
+   * 为指定的字段向getMethods集合添加一个Getter代理（GetFieldInvoker）
+   * @param field
+   */
   private void addGetField(Field field) {
     if (isValidPropertyName(field.getName())) {
       getMethods.put(field.getName(), new GetFieldInvoker(field));
