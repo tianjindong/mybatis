@@ -27,6 +27,9 @@ import org.apache.ibatis.reflection.invoker.MethodInvoker;
 import org.apache.ibatis.reflection.property.PropertyTokenizer;
 
 /**
+ * 封装类的信息
+ *
+ * MetaClass 类依赖 PropertyTokenizer 和 Reflector 查找表达式是否可以匹配 Java 对象中的字段，以及对应字段是否有 getter/setter 方法。
  * @author Clinton Begin
  */
 public class MetaClass {

@@ -18,24 +18,34 @@ package org.apache.ibatis.reflection.property;
 import java.util.Iterator;
 
 /**
+ * 例1: 参数: user[1].linkman.name
+ *         children=linkman.name
+ *         indexedName=user[1]
+ *         name=user
+ *         index=1
+ * 属性分解为标记，迭代器模式
  * @author Clinton Begin
  */
 public class PropertyTokenizer implements Iterator<PropertyTokenizer> {
-  private String name;
-  private final String indexedName;
-  private String index;
-  private final String children;
+  private String name;//名称
+  private final String indexedName;//带索引的名称
+  private String index;//索引
+  private final String children;//子名称
 
   public PropertyTokenizer(String fullname) {
+    //找出第一个“.”的索引
     int delim = fullname.indexOf('.');
     if (delim > -1) {
+      //存在“.”
       name = fullname.substring(0, delim);
       children = fullname.substring(delim + 1);
     } else {
+      //不存在“.”
       name = fullname;
       children = null;
     }
     indexedName = name;
+    //第一个“[”的索引
     delim = name.indexOf('[');
     if (delim > -1) {
       index = name.substring(delim + 1, name.length() - 1);

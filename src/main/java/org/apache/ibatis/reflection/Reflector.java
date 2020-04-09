@@ -42,29 +42,39 @@ import org.apache.ibatis.reflection.invoker.SetFieldInvoker;
 import org.apache.ibatis.reflection.property.PropertyNamer;
 
 /**
- * This class represents a cached set of class definition information that
- * allows for easy mapping between property names and getter/setter methods.
- *
+ * 这个类表示一组缓存的类定义信息，允许在属性名和getter/setter方法之间进行简单的映射
  * @author Clinton Begin
  */
 public class Reflector {
 
   private final Class<?> type;
+  //可读的属性名称
   private final String[] readablePropertyNames;
+  //可写的属性名称
   private final String[] writablePropertyNames;
+  //set方法的属性
   private final Map<String, Invoker> setMethods = new HashMap<>();
+  //get方法的属性
   private final Map<String, Invoker> getMethods = new HashMap<>();
+  //setter类型的列表
   private final Map<String, Class<?>> setTypes = new HashMap<>();
+  //getter类型的列表
   private final Map<String, Class<?>> getTypes = new HashMap<>();
+  //默认的构造函数
   private Constructor<?> defaultConstructor;
 
+  //不区分大小写的属性映射
   private Map<String, String> caseInsensitivePropertyMap = new HashMap<>();
 
   public Reflector(Class<?> clazz) {
     type = clazz;
+    //加入无参构造器
     addDefaultConstructor(clazz);
+    //加入getter方法
     addGetMethods(clazz);
+    //加入setter方法
     addSetMethods(clazz);
+    //加入字段
     addFields(clazz);
     readablePropertyNames = getMethods.keySet().toArray(new String[0]);
     writablePropertyNames = setMethods.keySet().toArray(new String[0]);
@@ -77,7 +87,9 @@ public class Reflector {
   }
 
   private void addDefaultConstructor(Class<?> clazz) {
+    //获取所有的构造器
     Constructor<?>[] constructors = clazz.getDeclaredConstructors();
+    //java8的流式操作，将无参构造器设置到defaultConstructor属性上
     Arrays.stream(constructors).filter(constructor -> constructor.getParameterTypes().length == 0)
       .findAny().ifPresent(constructor -> this.defaultConstructor = constructor);
   }
@@ -322,7 +334,7 @@ public class Reflector {
   }
 
   /**
-   * Checks whether can control member accessible.
+   * 检查是否可以控制成员的可访问性。
    *
    * @return If can control member accessible, it return {@literal true}
    * @since 3.5.0

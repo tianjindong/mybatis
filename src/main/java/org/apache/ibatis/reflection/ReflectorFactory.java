@@ -15,6 +15,9 @@
  */
 package org.apache.ibatis.reflection;
 
+/**
+ * 这个类表示一组缓存的类定义信息，允许在属性名和getter/setter方法之间进行简单的映射
+ */
 public interface ReflectorFactory {
 
   boolean isClassCacheEnabled();

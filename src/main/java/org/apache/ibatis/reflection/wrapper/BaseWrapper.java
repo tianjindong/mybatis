@@ -23,6 +23,7 @@ import org.apache.ibatis.reflection.ReflectionException;
 import org.apache.ibatis.reflection.property.PropertyTokenizer;
 
 /**
+ * 对象的基本包装类，该类没有实现ObjectWrapper接口任何方法，只提供一些工具类
  * @author Clinton Begin
  */
 public abstract class BaseWrapper implements ObjectWrapper {

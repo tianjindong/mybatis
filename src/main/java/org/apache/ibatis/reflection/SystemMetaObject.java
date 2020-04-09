@@ -21,6 +21,7 @@ import org.apache.ibatis.reflection.wrapper.DefaultObjectWrapperFactory;
 import org.apache.ibatis.reflection.wrapper.ObjectWrapperFactory;
 
 /**
+ * 系统默认的MetaObject工具类，提供forObject方法只需要传入原始对象即可构建出MetaObject，简化了MetaObject中的forObject方法
  * @author Clinton Begin
  */
 public final class SystemMetaObject {

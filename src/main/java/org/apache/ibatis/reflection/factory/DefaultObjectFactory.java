@@ -34,6 +34,7 @@ import org.apache.ibatis.reflection.ReflectionException;
 import org.apache.ibatis.reflection.Reflector;
 
 /**
+ * MyBatis默认的对象工厂类
  * @author Clinton Begin
  */
 public class DefaultObjectFactory implements ObjectFactory, Serializable {
@@ -48,8 +49,9 @@ public class DefaultObjectFactory implements ObjectFactory, Serializable {
   @SuppressWarnings("unchecked")
   @Override
   public <T> T create(Class<T> type, List<Class<?>> constructorArgTypes, List<Object> constructorArgs) {
+    //根据接口解析具体的实现类
     Class<?> classToCreate = resolveInterface(type);
-    // we know types are assignable
+    // 实例化类
     return (T) instantiateClass(classToCreate, constructorArgTypes, constructorArgs);
   }
 
@@ -57,10 +59,12 @@ public class DefaultObjectFactory implements ObjectFactory, Serializable {
     try {
       Constructor<T> constructor;
       if (constructorArgTypes == null || constructorArgs == null) {
+        //如果传入的构造器为空，则说明采用默认构造器创建
         constructor = type.getDeclaredConstructor();
         try {
           return constructor.newInstance();
         } catch (IllegalAccessException e) {
+          //检查是否可以控制成员的可访问性，如果可以控制，则将权限设为可访问
           if (Reflector.canControlMemberAccessible()) {
             constructor.setAccessible(true);
             return constructor.newInstance();
@@ -69,10 +73,13 @@ public class DefaultObjectFactory implements ObjectFactory, Serializable {
           }
         }
       }
+      //获取指定类型的构造器
       constructor = type.getDeclaredConstructor(constructorArgTypes.toArray(new Class[0]));
       try {
+        //创建对象
         return constructor.newInstance(constructorArgs.toArray(new Object[0]));
       } catch (IllegalAccessException e) {
+        //检查是否可以控制成员的可访问性，如果可以控制，则将权限设为可访问
         if (Reflector.canControlMemberAccessible()) {
           constructor.setAccessible(true);
           return constructor.newInstance(constructorArgs.toArray(new Object[0]));

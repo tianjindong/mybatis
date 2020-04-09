@@ -18,6 +18,7 @@ package org.apache.ibatis.reflection;
 import org.apache.ibatis.exceptions.PersistenceException;
 
 /**
+ * 反射异常
  * @author Clinton Begin
  */
 public class ReflectionException extends PersistenceException {

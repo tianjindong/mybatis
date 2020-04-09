@@ -20,15 +20,25 @@ import java.util.Locale;
 import org.apache.ibatis.reflection.ReflectionException;
 
 /**
+ * 属性命名器，是一个工具类，构造器已经私有化了
  * @author Clinton Begin
  */
 public final class PropertyNamer {
 
+  //私有化构造器
   private PropertyNamer() {
     // Prevent Instantiation of Static Class
   }
 
+  /**
+   * 输入method名称，返回属性名称
+   * @param name
+   * @return
+   */
   public static String methodToProperty(String name) {
+    /**
+     * 取出方法前面的 is、get、set
+     */
     if (name.startsWith("is")) {
       name = name.substring(2);
     } else if (name.startsWith("get") || name.startsWith("set")) {
@@ -37,6 +47,7 @@ public final class PropertyNamer {
       throw new ReflectionException("Error parsing property name '" + name + "'.  Didn't start with 'is', 'get' or 'set'.");
     }
 
+    //将name的首字母置为小写
     if (name.length() == 1 || (name.length() > 1 && !Character.isUpperCase(name.charAt(1)))) {
       name = name.substring(0, 1).toLowerCase(Locale.ENGLISH) + name.substring(1);
     }
