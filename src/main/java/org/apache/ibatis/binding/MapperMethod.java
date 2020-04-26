@@ -39,6 +39,8 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.session.SqlSession;
 
 /**
+ * 封装Mapper接口中对应方法的信息，以及对应的SQL语句的信息；它是Mapper接口与映射配置文件中SQL语句的桥梁
+ * MapperMethod也是MyBatis最终调用SqlSession中操作数据库方法（selectOne等）的地方，具体请看execute方法
  * @author Clinton Begin
  * @author Eduardo Macarron
  * @author Lasse Voss
@@ -46,7 +48,9 @@ import org.apache.ibatis.session.SqlSession;
  */
 public class MapperMethod {
 
+  //Configuration中获取方法的命名空间，方法名以及SQL语句的类型
   private final SqlCommand command;
+  //封装Mapper接口方法的相关信息（入参、返回类型等）
   private final MethodSignature method;
 
   public MapperMethod(Class<?> mapperInterface, Method method, Configuration config) {
@@ -54,10 +58,17 @@ public class MapperMethod {
     this.method = new MethodSignature(config, mapperInterface, method);
   }
 
+  /**
+   * 当用户调用Mapper接口的方法时，最终会执行该方法代理执行SqlSession中的方法
+   * @param sqlSession
+   * @param args
+   * @return
+   */
   public Object execute(SqlSession sqlSession, Object[] args) {
     Object result;
     switch (command.getType()) {
       case INSERT: {
+        // 将args进行解析，如果是多个参数则，则根据@Param注解指定名称将参数转换为Map，如果是封装实体则不转换
         Object param = method.convertArgsToSqlCommandParam(args);
         result = rowCountResult(sqlSession.insert(command.getName(), param));
         break;
@@ -73,6 +84,7 @@ public class MapperMethod {
         break;
       }
       case SELECT:
+        //查询操作
         if (method.returnsVoid() && method.hasResultHandler()) {
           executeWithResultHandler(sqlSession, args);
           result = null;
@@ -83,6 +95,9 @@ public class MapperMethod {
         } else if (method.returnsCursor()) {
           result = executeForCursor(sqlSession, args);
         } else {
+          //解析参数，因为SqlSession::selectOne方法参数只能传入一个，但是我们Mapper中可能传入多个参数，
+          //有可能是通过@Param注解指定参数名，所以这里需要将Mapper接口方法中的多个参数转化为一个ParamMap,
+          //也就是说如果是传入的单个封装实体，那么直接返回出来；如果传入的是多个参数，实际上都转换成了Map
           Object param = method.convertArgsToSqlCommandParam(args);
           result = sqlSession.selectOne(command.getName(), param);
           if (method.returnsOptional()
@@ -218,12 +233,15 @@ public class MapperMethod {
 
   public static class SqlCommand {
 
+    //SQL语句名称：命名空间+方法名
     private final String name;
+    //SQL语句的类型（Select Insert Update Delete）
     private final SqlCommandType type;
 
     public SqlCommand(Configuration configuration, Class<?> mapperInterface, Method method) {
       final String methodName = method.getName();
       final Class<?> declaringClass = method.getDeclaringClass();
+      //从Configuration中拿出MappedStatement（MappedStatement用于封装映射配置文件中的SQL标签）
       MappedStatement ms = resolveMappedStatement(mapperInterface, methodName, declaringClass,
           configuration);
       if (ms == null) {
@@ -235,7 +253,9 @@ public class MapperMethod {
               + mapperInterface.getName() + "." + methodName);
         }
       } else {
+        //获取查询语句的ID：命名空间+statementId
         name = ms.getId();
+        //获取SQL语句的类型
         type = ms.getSqlCommandType();
         if (type == SqlCommandType.UNKNOWN) {
           throw new BindingException("Unknown execution method for: " + name);
@@ -274,15 +294,21 @@ public class MapperMethod {
 
   public static class MethodSignature {
 
+    //是否返回多个结果
     private final boolean returnsMany;
+    //是否返回的是Map
     private final boolean returnsMap;
+    //是否没有返回
     private final boolean returnsVoid;
     private final boolean returnsCursor;
+    //是否返回的是Optionnal
     private final boolean returnsOptional;
+    //返回类型
     private final Class<?> returnType;
     private final String mapKey;
     private final Integer resultHandlerIndex;
     private final Integer rowBoundsIndex;
+    //该方法的参数解析器
     private final ParamNameResolver paramNameResolver;
 
     public MethodSignature(Configuration configuration, Class<?> mapperInterface, Method method) {
@@ -305,6 +331,11 @@ public class MapperMethod {
       this.paramNameResolver = new ParamNameResolver(configuration, method);
     }
 
+    /**
+     * 将args进行解析，如果是多个参数则，则根据@Param注解指定名称将参数转换为Map，如果是封装实体则不转换
+     * @param args
+     * @return
+     */
     public Object convertArgsToSqlCommandParam(Object[] args) {
       return paramNameResolver.getNamedParams(args);
     }

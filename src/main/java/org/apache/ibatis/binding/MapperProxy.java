@@ -30,6 +30,7 @@ import org.apache.ibatis.reflection.ExceptionUtil;
 import org.apache.ibatis.session.SqlSession;
 
 /**
+ * 实现了InvocationHandler接口，它是Mapper动态代理的核心
  * @author Clinton Begin
  * @author Eduardo Macarron
  */
@@ -40,7 +41,9 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
       | MethodHandles.Lookup.PACKAGE | MethodHandles.Lookup.PUBLIC;
   private static final Constructor<Lookup> lookupConstructor;
   private static final Method privateLookupInMethod;
+  //关联的SqlSession对象
   private final SqlSession sqlSession;
+  //Mapper接口的Class对象
   private final Class<T> mapperInterface;
   private final Map<Method, MapperMethodInvoker> methodCache;
 
@@ -80,8 +83,10 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     try {
       if (Object.class.equals(method.getDeclaringClass())) {
+        //如果是Object方法，则调用方法本身
         return method.invoke(this, args);
       } else {
+        //从缓存中获取MapperMethodInvoker对象，如果没有则创建一个，然后调用PlainMethodInvoker::invoke
         return cachedInvoker(method).invoke(proxy, method, args, sqlSession);
       }
     } catch (Throwable t) {
@@ -89,6 +94,12 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
     }
   }
 
+  /**
+   * 获取缓存中MapperMethodInvoker，如果没有则创建一个，而MapperMethodInvoker内部封装这一个MethodHandler
+   * @param method
+   * @return
+   * @throws Throwable
+   */
   private MapperMethodInvoker cachedInvoker(Method method) throws Throwable {
     try {
       return methodCache.computeIfAbsent(method, m -> {
@@ -124,6 +135,7 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
   private MethodHandle getMethodHandleJava8(Method method)
       throws IllegalAccessException, InstantiationException, InvocationTargetException {
     final Class<?> declaringClass = method.getDeclaringClass();
+    //TODO 需研究此处具体意义
     return lookupConstructor.newInstance(declaringClass, ALLOWED_MODES).unreflectSpecial(method, declaringClass);
   }
 
@@ -141,6 +153,7 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args, SqlSession sqlSession) throws Throwable {
+      //Mybatis如何帮助用户实现动态代理的玄机就在里面
       return mapperMethod.execute(sqlSession, args);
     }
   }
@@ -155,6 +168,7 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args, SqlSession sqlSession) throws Throwable {
+      //TODO 需研究此处具体意义
       return methodHandle.bindTo(proxy).invokeWithArguments(args);
     }
   }

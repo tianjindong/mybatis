@@ -24,11 +24,14 @@ import org.apache.ibatis.binding.MapperProxy.MapperMethodInvoker;
 import org.apache.ibatis.session.SqlSession;
 
 /**
+ * 专门用于生产Mapper接口的动态代理实现对象
  * @author Lasse Voss
  */
 public class MapperProxyFactory<T> {
 
+  //Mapper接口的Class对象
   private final Class<T> mapperInterface;
+  //key是Mapper接口中的某个方法的Method对象，value是对应的MapperMethod，MapperMethod对象不记录任何状态信息，所以它可以在多个代理对象之间共存
   private final Map<Method, MapperMethodInvoker> methodCache = new ConcurrentHashMap<>();
 
   public MapperProxyFactory(Class<T> mapperInterface) {
