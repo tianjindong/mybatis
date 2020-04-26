@@ -32,22 +32,35 @@ import org.apache.ibatis.reflection.ParamNameUtil;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ * 用于解析MyBatis映射配置文件中的resultMap节点，使用ResultMapping来封装id，result等子元素
  * @author Clinton Begin
  */
 public class ResultMap {
   private Configuration configuration;
 
+  //resultMap的Id属性
   private String id;
+  //type属性
   private Class<?> type;
+  //除discriminator节点之外的映射关系
   private List<ResultMapping> resultMappings;
+  //记录id或者constructor中idArg的映射关系
   private List<ResultMapping> idResultMappings;
+  //记录constructor标志的映射关系
   private List<ResultMapping> constructorResultMappings;
+  //记录非constructor
   private List<ResultMapping> propertyResultMappings;
+  //记录所有有映射关系的columns字段
   private Set<String> mappedColumns;
+  //记录所有有映射关系的property字段
   private Set<String> mappedProperties;
+  //鉴别器，对应discriminator节点
   private Discriminator discriminator;
+  //是否有嵌套结果映射
   private boolean hasNestedResultMaps;
+  //是否有嵌套查询
   private boolean hasNestedQueries;
+  //是否开启了自动映射
   private Boolean autoMapping;
 
   private ResultMap() {

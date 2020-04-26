@@ -41,16 +41,17 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 /**
+ * 
  * @author Clinton Begin
  * @author Kazuki Shimizu
  */
 public class XPathParser {
 
   private final Document document;
-  private boolean validation;
-  private EntityResolver entityResolver;
-  private Properties variables;
-  private XPath xpath;
+  private boolean validation; //是否开启验证
+  private EntityResolver entityResolver; //用于加载本地DTD文件
+  private Properties variables;//mybatis-config.xml中<properties>标签定义的键值对集合
+  private XPath xpath;//XPath用于查询XML文档设计的语言，它可以与DOM解析方式配合使用。XPath之于DOM就好比SQL之于数据库
 
   public XPathParser(String xml) {
     commonConstructor(false, null, null);
@@ -135,6 +136,8 @@ public class XPathParser {
   public void setVariables(Properties variables) {
     this.variables = variables;
   }
+
+  /*---------------------以下eval*()方法根据XPath表达式查找对应节点或属性，并进行相应类型转换--------------------------*/
 
   public String evalString(String expression) {
     return evalString(document, expression);
@@ -227,9 +230,16 @@ public class XPathParser {
     }
   }
 
+  /**
+   * 在 XPathParser::createDocument()方法中封装了 Document 对象的过程并触发了加载XML文挡的过程
+   * 注：调用createOocument()方法之前一定要先调用commonConstructor()方法完成初始化
+   * @param inputSource
+   * @return
+   */
   private Document createDocument(InputSource inputSource) {
     // important: this must only be called AFTER common constructor
     try {
+      //创建DocumentBuilderFactory 对象
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
       factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
       factory.setValidating(validation);
@@ -240,7 +250,9 @@ public class XPathParser {
       factory.setCoalescing(false);
       factory.setExpandEntityReferences(true);
 
+      //创建 DocumentBuilder 对象并进行自己置
       DocumentBuilder builder = factory.newDocumentBuilder();
+      //设置 EntityResolver 口对象
       builder.setEntityResolver(entityResolver);
       builder.setErrorHandler(new ErrorHandler() {
         @Override
@@ -258,6 +270,7 @@ public class XPathParser {
           // NOP
         }
       });
+      //加载XML文件，返回Document对象
       return builder.parse(inputSource);
     } catch (Exception e) {
       throw new BuilderException("Error creating document instance.  Cause: " + e, e);

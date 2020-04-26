@@ -26,24 +26,37 @@ import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
 /**
+ * 映射配置文件 resultMap节点的子节点封装类，用于id、result、association、collection子节点
  * @author Clinton Begin
  */
 public class ResultMapping {
 
+  //应用的configuration对象
   private Configuration configuration;
+  //对应节点的property属性
   private String property;
+  //对应节点的column属性
   private String column;
+  //对应节点的JavaType属性
   private Class<?> javaType;
+  //对应节点的jdbcType属性
   private JdbcType jdbcType;
   private TypeHandler<?> typeHandler;
+  //对应节点的resultMap属性，嵌套结果时使用
   private String nestedResultMapId;
+  //对应节点的select属性，嵌套查询时使用
   private String nestedQueryId;
+  //对应节点的notNullColumns属性
   private Set<String> notNullColumns;
+  //对应节点的columnPrefix属性
   private String columnPrefix;
   private List<ResultFlag> flags;
   private List<ResultMapping> composites;
+  //对应节点的resultSet属性
   private String resultSet;
+  //对应节点的foreignColumn
   private String foreignColumn;
+  //对应节点的fetchType属性，是否延迟加载
   private boolean lazy;
 
   ResultMapping() {

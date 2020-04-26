@@ -46,6 +46,10 @@ import org.apache.ibatis.session.SqlSession;
  *
  * @author Clinton Begin
  */
+
+/**
+ * MyBatis中SqlSession接口的唯一实现类
+ */
 public class DefaultSqlSession implements SqlSession {
 
   private final Configuration configuration;

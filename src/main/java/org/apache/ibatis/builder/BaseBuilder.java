@@ -32,8 +32,11 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
  * @author Clinton Begin
  */
 public abstract class BaseBuilder {
+  //初始化过程的核心对象，XML配置文件的所有信息都会加载到这里，单例模式
   protected final Configuration configuration;
+  //TypeAlias别名信息注册中心
   protected final TypeAliasRegistry typeAliasRegistry;
+  //TypeHandler类型解析器注册中心
   protected final TypeHandlerRegistry typeHandlerRegistry;
 
   public BaseBuilder(Configuration configuration) {

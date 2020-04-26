@@ -50,12 +50,14 @@ import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
 
 /**
+ * XMLMapperBuilder负责解析mapper映射文件
  * @author Clinton Begin
  * @author Kazuki Shimizu
  */
 public class XMLMapperBuilder extends BaseBuilder {
 
   private final XPathParser parser;
+  //XMLMapperBuilder解析映射文件的助手
   private final MapperBuilderAssistant builderAssistant;
   private final Map<String, XNode> sqlFragments;
   private final String resource;
@@ -92,13 +94,21 @@ public class XMLMapperBuilder extends BaseBuilder {
 
   public void parse() {
     if (!configuration.isResourceLoaded(resource)) {
+      //该配置文件未被加载过
+      //获取mapper根节点,解析子节点元素
       configurationElement(parser.evalNode("/mapper"));
+      //向configuration中注册已经加载的映射文件，resource为映射文件的文件名
       configuration.addLoadedResource(resource);
+      //注册mapper接口，生成动态代理类
       bindMapperForNamespace();
     }
 
+
+    //处理解析失败的ResultMap节点
     parsePendingResultMaps();
+    //处理解析失败的CacheRefs
     parsePendingCacheRefs();
+    //处理解析失败的SQL语句节点
     parsePendingStatements();
   }
 
@@ -106,18 +116,29 @@ public class XMLMapperBuilder extends BaseBuilder {
     return sqlFragments.get(refid);
   }
 
+  /**
+   * 解析映射配置文件的核心方法
+   * @param context
+   */
   private void configurationElement(XNode context) {
     try {
+
       String namespace = context.getStringAttribute("namespace");
       if (namespace == null || namespace.isEmpty()) {
         throw new BuilderException("Mapper's namespace cannot be empty");
       }
       builderAssistant.setCurrentNamespace(namespace);
+      //解析cache-ref节点
       cacheRefElement(context.evalNode("cache-ref"));
+      //重点分析：解析cache节点
       cacheElement(context.evalNode("cache"));
+      //解析parameterMap（弃用）
       parameterMapElement(context.evalNodes("/mapper/parameterMap"));
+      //重点分析：解析resultMap（多个）
       resultMapElements(context.evalNodes("/mapper/resultMap"));
+      //解析sql节点
       sqlElement(context.evalNodes("/mapper/sql"));
+      //重点分析：解析select、insert等标签
       buildStatementFromContext(context.evalNodes("select|insert|update|delete"));
     } catch (Exception e) {
       throw new BuilderException("Error parsing Mapper XML. The XML location is '" + resource + "'. Cause: " + e, e);
@@ -133,8 +154,10 @@ public class XMLMapperBuilder extends BaseBuilder {
 
   private void buildStatementFromContext(List<XNode> list, String requiredDatabaseId) {
     for (XNode context : list) {
+      //创建XMLStatementBuilder专门用于解析sql语句节点
       final XMLStatementBuilder statementParser = new XMLStatementBuilder(configuration, builderAssistant, context, requiredDatabaseId);
       try {
+        //解析SQL语句节点
         statementParser.parseStatementNode();
       } catch (IncompleteElementException e) {
         configuration.addIncompleteStatement(statementParser);
@@ -201,15 +224,24 @@ public class XMLMapperBuilder extends BaseBuilder {
 
   private void cacheElement(XNode context) {
     if (context != null) {
+      //获取cache节点的type属性，默认值为PERPETUAL（PerpetualCache是MyBatis缓存的核心实现类）。
       String type = context.getStringAttribute("type", "PERPETUAL");
+      //找到type对应的Cache实现
       Class<? extends Cache> typeClass = typeAliasRegistry.resolveAlias(type);
+      //读取eviction属性，即缓存的淘汰策略，默认为LRU
       String eviction = context.getStringAttribute("eviction", "LRU");
+      //根据eviction属性，找到装饰器
       Class<? extends Cache> evictionClass = typeAliasRegistry.resolveAlias(eviction);
+      //读取flushInterval，即缓存的刷新周期
       Long flushInterval = context.getLongAttribute("flushInterval");
+      //读取size属性，即缓存的容量大小
       Integer size = context.getIntAttribute("size");
+      //读取readWrite，即缓存是否只读
       boolean readWrite = !context.getBooleanAttribute("readOnly", false);
+      //读取blocking，即缓存是否阻塞
       boolean blocking = context.getBooleanAttribute("blocking", false);
       Properties props = context.getChildrenAsProperties();
+      //通过builderAssistant创建缓存对象，并添加至Configuration
       builderAssistant.useNewCache(typeClass, evictionClass, flushInterval, size, readWrite, blocking, props);
     }
   }
@@ -240,9 +272,16 @@ public class XMLMapperBuilder extends BaseBuilder {
     }
   }
 
+  /**
+   * 解析resultMap配置，也就是解析查询结果与pojo对象的转化关系
+   * @param list
+   */
   private void resultMapElements(List<XNode> list) {
+    //遍历所有resultMap节点
     for (XNode resultMapNode : list) {
+      //变量所有resultMap节点，解析它们
       try {
+        //解析具体的resultMap
         resultMapElement(resultMapNode);
       } catch (IncompleteElementException e) {
         // ignore, it will be retried
@@ -416,19 +455,24 @@ public class XMLMapperBuilder extends BaseBuilder {
   }
 
   private void bindMapperForNamespace() {
+    //获取当前的命名空间
     String namespace = builderAssistant.getCurrentNamespace();
     if (namespace != null) {
       Class<?> boundType = null;
       try {
+        //通过命名空间获取mapper接口的class对象
         boundType = Resources.classForName(namespace);
       } catch (ClassNotFoundException e) {
         // ignore, bound type is not required
       }
       if (boundType != null && !configuration.hasMapper(boundType)) {
+        //如果没有注册过该接口
         // Spring may not know the real resource name so we set a flag
         // to prevent loading again this resource from the mapper interface
         // look at MapperAnnotationBuilder#loadXmlResource
+        //将命名空间添加至configuration.loadedResource集合中
         configuration.addLoadedResource("namespace:" + namespace);
+        //将mapper接口添加到mapper注册中心
         configuration.addMapper(boundType);
       }
     }

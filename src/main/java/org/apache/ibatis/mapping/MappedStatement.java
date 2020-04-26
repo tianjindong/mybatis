@@ -29,32 +29,49 @@ import org.apache.ibatis.scripting.LanguageDriver;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ * 用于存储映射配置文件中的select、insert、update和delete节点，同时还包含了这些节点的很多重要属性
  * @author Clinton Begin
  */
 public final class MappedStatement {
 
+  //命名空间+id属性
   private String resource;
   private Configuration configuration;
+  //节点的id属性
   private String id;
+  //节点的fetchSize属性,查询数据的条数
   private Integer fetchSize;
+  //节点的timeout属性，超时时间
   private Integer timeout;
+  //节点的statementType属性,默认值：StatementType.PREPARED;疑问？
   private StatementType statementType;
+  //节点的resultSetType属性,jdbc知识
   private ResultSetType resultSetType;
+  //封装SQL语句
   private SqlSource sqlSource;
+  //对应的二级缓存
   private Cache cache;
+  //已废弃
   private ParameterMap parameterMap;
+  //节点的resultMaps属性
   private List<ResultMap> resultMaps;
+  //节点的flushCache属性是否刷新缓存
   private boolean flushCacheRequired;
+  //节点的useCache属性是否使用二级缓存
   private boolean useCache;
   private boolean resultOrdered;
+  //sql语句的类型，包括：INSERT, UPDATE, DELETE, SELECT
   private SqlCommandType sqlCommandType;
+  //节点keyGenerator属性
   private KeyGenerator keyGenerator;
   private String[] keyProperties;
   private String[] keyColumns;
+  //是否有嵌套resultMap
   private boolean hasNestedResultMaps;
   private String databaseId;
   private Log statementLog;
   private LanguageDriver lang;
+  //多结果集使用
   private String[] resultSets;
 
   MappedStatement() {

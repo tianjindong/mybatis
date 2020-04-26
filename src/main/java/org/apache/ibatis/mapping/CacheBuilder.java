@@ -90,17 +90,23 @@ public class CacheBuilder {
   }
 
   public Cache build() {
+    //设置缓存的核心实现类为PerpetualCache
     setDefaultImplementations();
+    //通过反射实例化设置缓存的核心实现类为PerpetualCache
     Cache cache = newBaseCacheInstance(implementation, id);
+    //根据Cache下的property信息，初始化Cache
     setCacheProperties(cache);
     // issue #352, do not apply decorators to custom caches
     if (PerpetualCache.class.equals(cache.getClass())) {
+      //如果cache是PerpetualCache的实现，则添加装饰器，这里主要处理缓存清空策略的装饰器
       for (Class<? extends Cache> decorator : decorators) {
         cache = newCacheDecoratorInstance(decorator, cache);
         setCacheProperties(cache);
       }
+      //通过配置属性，添加其他的装饰器
       cache = setStandardDecorators(cache);
     } else if (!LoggingCache.class.isAssignableFrom(cache.getClass())) {
+      //如果cache不是PerpetualCache
       cache = new LoggingCache(cache);
     }
     return cache;
@@ -117,6 +123,7 @@ public class CacheBuilder {
 
   private Cache setStandardDecorators(Cache cache) {
     try {
+      //MetaObject是反射模块的核心类，它方便设置对象的属性
       MetaObject metaCache = SystemMetaObject.forObject(cache);
       if (size != null && metaCache.hasSetter("size")) {
         metaCache.setValue("size", size);
@@ -128,9 +135,12 @@ public class CacheBuilder {
       if (readWrite) {
         cache = new SerializedCache(cache);
       }
+      //日志装饰器
       cache = new LoggingCache(cache);
+      //同步装饰器
       cache = new SynchronizedCache(cache);
       if (blocking) {
+        //如果配置了blocking=true则创建Blocking装饰器
         cache = new BlockingCache(cache);
       }
       return cache;
@@ -139,6 +149,10 @@ public class CacheBuilder {
     }
   }
 
+  /**
+   * 设置缓存属性
+   * @param cache
+   */
   private void setCacheProperties(Cache cache) {
     if (properties != null) {
       MetaObject metaCache = SystemMetaObject.forObject(cache);
