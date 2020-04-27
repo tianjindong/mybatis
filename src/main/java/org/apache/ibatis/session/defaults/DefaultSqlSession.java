@@ -52,10 +52,13 @@ import org.apache.ibatis.session.SqlSession;
  */
 public class DefaultSqlSession implements SqlSession {
 
+  //全局Configuration对象
   private final Configuration configuration;
   private final Executor executor;
 
+  //是否自动提交事务
   private final boolean autoCommit;
+  //当前缓存中是否有脏数据
   private boolean dirty;
   private List<Cursor<?>> cursorList;
 
@@ -145,6 +148,14 @@ public class DefaultSqlSession implements SqlSession {
     return this.selectList(statement, parameter, RowBounds.DEFAULT);
   }
 
+  /**
+   * SqlSession中所有的查询方法底层都会调用当前方法
+   * @param statement Unique identifier matching the statement to use.
+   * @param parameter A parameter object to pass to the statement.
+   * @param rowBounds  Bounds to limit object retrieval
+   * @param <E>
+   * @return
+   */
   @Override
   public <E> List<E> selectList(String statement, Object parameter, RowBounds rowBounds) {
     try {

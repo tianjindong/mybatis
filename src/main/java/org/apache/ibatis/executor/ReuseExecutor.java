@@ -38,6 +38,7 @@ import org.apache.ibatis.transaction.Transaction;
  */
 public class ReuseExecutor extends BaseExecutor {
 
+  //由于Executor与SqlSession是一对一关联的，而SqlSession是线程不安全的，只会在单个线程中使用，所以此处的缓存采用HashMap是不会产生线程安全问题的
   private final Map<String, Statement> statementMap = new HashMap<>();
 
   public ReuseExecutor(Configuration configuration, Transaction transaction) {
@@ -56,6 +57,7 @@ public class ReuseExecutor extends BaseExecutor {
   public <E> List<E> doQuery(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) throws SQLException {
     Configuration configuration = ms.getConfiguration();
     StatementHandler handler = configuration.newStatementHandler(wrapper, ms, parameter, rowBounds, resultHandler, boundSql);
+    //获取Statment，与SimpleExecutor中不同的是，ReuseExecutor在这里会先去缓存中寻找Statement，如果没有再创建
     Statement stmt = prepareStatement(handler, ms.getStatementLog());
     return handler.query(stmt, resultHandler);
   }
@@ -82,11 +84,15 @@ public class ReuseExecutor extends BaseExecutor {
     BoundSql boundSql = handler.getBoundSql();
     String sql = boundSql.getSql();
     if (hasStatementFor(sql)) {
+      //该SQL语句存在缓存的Statement
       stmt = getStatement(sql);
+      //重新刷新超时时间
       applyTransactionTimeout(stmt);
     } else {
+      //缓存中没有Statement
       Connection connection = getConnection(statementLog);
       stmt = handler.prepare(connection, transaction.getTimeout());
+      //放入缓存中
       putStatement(sql, stmt);
     }
     handler.parameterize(stmt);

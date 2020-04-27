@@ -44,6 +44,7 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
 
   @Override
   public SqlSession openSession() {
+    //从数据源中获取连接，然后创建SqlSessionFactory
     return openSessionFromDataSource(configuration.getDefaultExecutorType(), null, false);
   }
 
@@ -87,13 +88,25 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
     return configuration;
   }
 
+  /**
+   * 从数据源中获取数据库连接
+   * @param execType
+   * @param level
+   * @param autoCommit
+   * @return
+   */
   private SqlSession openSessionFromDataSource(ExecutorType execType, TransactionIsolationLevel level, boolean autoCommit) {
     Transaction tx = null;
     try {
+      //获取mybatis-config.xml中的enviroment对象
       final Environment environment = configuration.getEnvironment();
+      //从Enviroment获取TranslationFactory
       final TransactionFactory transactionFactory = getTransactionFactoryFromEnvironment(environment);
+      //从数据源中获取数据库连接，然后创建Transaction对象
       tx = transactionFactory.newTransaction(environment.getDataSource(), level, autoCommit);
+      //重点：根据配置创建Executor，该方法内部会根据用户是否配置二级缓存去决定是否创建二级缓存的装饰器去装饰Executor，这也是二级缓存是否生效的关键
       final Executor executor = configuration.newExecutor(tx, execType);
+      //创建DefaultSqlSession
       return new DefaultSqlSession(configuration, executor, autoCommit);
     } catch (Exception e) {
       closeTransaction(tx); // may have fetched a connection so lets call close()
@@ -103,6 +116,12 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
     }
   }
 
+  /**
+   * 根据数据库连接获取SqlSession
+   * @param execType
+   * @param connection
+   * @return
+   */
   private SqlSession openSessionFromConnection(ExecutorType execType, Connection connection) {
     try {
       boolean autoCommit;
@@ -115,6 +134,7 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
       }
       final Environment environment = configuration.getEnvironment();
       final TransactionFactory transactionFactory = getTransactionFactoryFromEnvironment(environment);
+      //根据数据库连接创建Transaction
       final Transaction tx = transactionFactory.newTransaction(connection);
       final Executor executor = configuration.newExecutor(tx, execType);
       return new DefaultSqlSession(configuration, executor, autoCommit);

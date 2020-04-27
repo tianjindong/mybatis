@@ -86,7 +86,8 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
         //如果是Object方法，则调用方法本身
         return method.invoke(this, args);
       } else {
-        //从缓存中获取MapperMethodInvoker对象，如果没有则创建一个，然后调用PlainMethodInvoker::invoke
+        //根据被调用接口方法的Method对象，从缓存中获取MapperMethodInvoker对象，如果没有则创建一个并放入缓存，然后调用invoke。
+        //换句话说，Mapper接口中的每一个方法都对应一个MapperMethodInvoker对象，而MapperMethodInvoker对象里面的MapperMethod保存着对应的SQL信息和返回类型以完成SQL调用
         return cachedInvoker(method).invoke(proxy, method, args, sqlSession);
       }
     } catch (Throwable t) {
@@ -104,6 +105,7 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
     try {
       return methodCache.computeIfAbsent(method, m -> {
         if (m.isDefault()) {
+          //如果调用接口的是默认方法（JDK8新增接口默认方法的概念）
           try {
             if (privateLookupInMethod == null) {
               return new DefaultMethodInvoker(getMethodHandleJava8(method));
@@ -115,6 +117,7 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
             throw new RuntimeException(e);
           }
         } else {
+          //如果调用的普通方法（非default方法），则创建一个PlainMethodInvoker并放入缓存，其中MapperMethod保存对应接口方法的SQL以及入参和出参的数据类型等信息
           return new PlainMethodInvoker(new MapperMethod(mapperInterface, method, sqlSession.getConfiguration()));
         }
       });
@@ -168,7 +171,6 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args, SqlSession sqlSession) throws Throwable {
-      //TODO 需研究此处具体意义
       return methodHandle.bindTo(proxy).invokeWithArguments(args);
     }
   }

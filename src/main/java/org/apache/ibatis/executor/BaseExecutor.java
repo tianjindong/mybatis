@@ -45,20 +45,34 @@ import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
 /**
+ * 模板方法模式，实现了Executor大部分方法，主要提供了缓存管理（这里只提供一级缓存功能，具体在query方法中实现）和事务管理，
+ * 其他子类需要实现的抽象方法为doUpdate、doQuery等方法。
+ * 注：二级缓存是在CachingExecutor装饰器中实现
+ * BaseExecutor的子类有：
+ *    SimpleExecutor：默认配置，使用PreparedStatement对象访问数据库，每次访问都会创建一个新的PreparedStatement对象
+ *    ReuseExecutor：使用预编译PreparedStatement对象访问数据库，访问时会重用缓存中的 Statement对象
+ *    BatchExector：实现批处理执行多条SQL语句的能力
  * @author Clinton Begin
  */
 public abstract class BaseExecutor implements Executor {
 
   private static final Log log = LogFactory.getLog(BaseExecutor.class);
 
+  //事务对象
   protected Transaction transaction;
+  //封装的Executor
   protected Executor wrapper;
 
+  //延迟加载的队列
   protected ConcurrentLinkedQueue<DeferredLoad> deferredLoads;
+  //一级缓存实现
   protected PerpetualCache localCache;
+  //一级缓存用于缓存输出的结果
   protected PerpetualCache localOutputParameterCache;
+  //全局Configuration
   protected Configuration configuration;
 
+  //嵌套查询的层数
   protected int queryStack;
   private boolean closed;
 
@@ -131,7 +145,9 @@ public abstract class BaseExecutor implements Executor {
 
   @Override
   public <E> List<E> query(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler) throws SQLException {
+    //获取SQL信息
     BoundSql boundSql = ms.getBoundSql(parameter);
+    //根据statementId、SQL语句、参数、分页信息等生产缓存的Key
     CacheKey key = createCacheKey(ms, parameter, rowBounds, boundSql);
     return query(ms, parameter, rowBounds, resultHandler, key, boundSql);
   }
@@ -143,16 +159,21 @@ public abstract class BaseExecutor implements Executor {
     if (closed) {
       throw new ExecutorException("Executor was closed.");
     }
+    //没有嵌套查询且flushCache=tre则清空缓存
     if (queryStack == 0 && ms.isFlushCacheRequired()) {
       clearLocalCache();
     }
     List<E> list;
     try {
+      //查询层次加一
       queryStack++;
+      //查询一级缓存
       list = resultHandler == null ? (List<E>) localCache.getObject(key) : null;
       if (list != null) {
+        //处理一级缓存中的输出参数（存储过程）
         handleLocallyCachedOutputParameters(ms, key, parameter, boundSql);
       } else {
+        //缓存未命中，从数据库加载数据，并将结果放入以及缓存
         list = queryFromDatabase(ms, parameter, rowBounds, resultHandler, key, boundSql);
       }
     } finally {
@@ -160,11 +181,13 @@ public abstract class BaseExecutor implements Executor {
     }
     if (queryStack == 0) {
       for (DeferredLoad deferredLoad : deferredLoads) {
+        //延迟加载处理
         deferredLoad.load();
       }
       // issue #601
       deferredLoads.clear();
       if (configuration.getLocalCacheScope() == LocalCacheScope.STATEMENT) {
+        //如果当前SQL的一级缓存配置为STATEMENT，查询完既清空缓存
         // issue #482
         clearLocalCache();
       }
@@ -318,16 +341,31 @@ public abstract class BaseExecutor implements Executor {
     }
   }
 
+  /**
+   * 从数据库查询数据
+   * @param ms
+   * @param parameter
+   * @param rowBounds
+   * @param resultHandler
+   * @param key
+   * @param boundSql
+   * @param <E>
+   * @return
+   * @throws SQLException
+   */
   private <E> List<E> queryFromDatabase(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, CacheKey key, BoundSql boundSql) throws SQLException {
     List<E> list;
     localCache.putObject(key, EXECUTION_PLACEHOLDER);
     try {
+      //真正执行查询的方法，这个需要子类去实现
       list = doQuery(ms, parameter, rowBounds, resultHandler, boundSql);
     } finally {
       localCache.removeObject(key);
     }
+    //查询完成后放入缓存中
     localCache.putObject(key, list);
     if (ms.getStatementType() == StatementType.CALLABLE) {
+      //如果调用的是存储过程，则还需要缓存输出参数
       localOutputParameterCache.putObject(key, parameter);
     }
     return list;
@@ -336,6 +374,7 @@ public abstract class BaseExecutor implements Executor {
   protected Connection getConnection(Log statementLog) throws SQLException {
     Connection connection = transaction.getConnection();
     if (statementLog.isDebugEnabled()) {
+      //如果日志级别处于Debug，则创建带有日志功能的连接对象（代理模式）
       return ConnectionLogger.newInstance(connection, statementLog, queryStack);
     } else {
       return connection;

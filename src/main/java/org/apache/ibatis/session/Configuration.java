@@ -673,13 +673,17 @@ public class Configuration {
     executorType = executorType == null ? ExecutorType.SIMPLE : executorType;
     Executor executor;
     if (ExecutorType.BATCH == executorType) {
+      //创建Batch类型的Executor
       executor = new BatchExecutor(this, transaction);
     } else if (ExecutorType.REUSE == executorType) {
+      //创建Reuse类型的Executor
       executor = new ReuseExecutor(this, transaction);
     } else {
+      //创建simple类型的Executor
       executor = new SimpleExecutor(this, transaction);
     }
     if (cacheEnabled) {
+      //如果配置了二级缓存，则用CachingExecutor装饰前面创建的Executor，从而实现二级缓存
       executor = new CachingExecutor(executor);
     }
     executor = (Executor) interceptorChain.pluginAll(executor);

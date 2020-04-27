@@ -32,6 +32,7 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 
 /**
+ * 提供基本的一级缓存以及延迟加载的逻辑
  * @author Clinton Begin
  */
 public class SimpleExecutor extends BaseExecutor {
@@ -58,8 +59,11 @@ public class SimpleExecutor extends BaseExecutor {
     Statement stmt = null;
     try {
       Configuration configuration = ms.getConfiguration();
+      //创建StatementHandler对象
       StatementHandler handler = configuration.newStatementHandler(wrapper, ms, parameter, rowBounds, resultHandler, boundSql);
+      //StatementHandler对象创建stm，并使用parameterHandler对占位服务进行处理
       stmt = prepareStatement(handler, ms.getStatementLog());
+      //通过statementHandler对象调用ResultSetHandler将结果集转化为指定对象返回
       return handler.query(stmt, resultHandler);
     } finally {
       closeStatement(stmt);
@@ -83,7 +87,9 @@ public class SimpleExecutor extends BaseExecutor {
 
   private Statement prepareStatement(StatementHandler handler, Log statementLog) throws SQLException {
     Statement stmt;
+    //试图创建带有日志功能的Connection，也就是ConnectionLogger
     Connection connection = getConnection(statementLog);
+    //试图创建带有日志功能PreparedStatement，也就是PreparedStatementLogger
     stmt = handler.prepare(connection, transaction.getTimeout());
     handler.parameterize(stmt);
     return stmt;

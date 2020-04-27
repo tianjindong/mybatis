@@ -33,6 +33,7 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 
 /**
+ * Executor的二级缓存装饰器，它是实现MyBatis二级缓存的关键
  * @author Clinton Begin
  * @author Eduardo Macarron
  */
@@ -92,14 +93,18 @@ public class CachingExecutor implements Executor {
   @Override
   public <E> List<E> query(MappedStatement ms, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, CacheKey key, BoundSql boundSql)
       throws SQLException {
+    //获取二级缓存
     Cache cache = ms.getCache();
     if (cache != null) {
       flushCacheIfRequired(ms);
       if (ms.isUseCache() && resultHandler == null) {
         ensureNoOutParams(ms, boundSql);
+        //从二级缓存中获取数据
         @SuppressWarnings("unchecked")
         List<E> list = (List<E>) tcm.getObject(cache, key);
         if (list == null) {
+          //二级缓存为空，才调用被装饰的Executor的query获取数据，由于CachingExecutor大多数时候是用来装饰SimpleExecutor对象，所以CachingExecutor
+          // 中的二级缓存逻辑会先执行，如果二级缓存中没有数据，才会执行SimpleExecutor中一级缓存的逻辑
           list = delegate.query(ms, parameterObject, rowBounds, resultHandler, key, boundSql);
           tcm.putObject(cache, key, list); // issue #578 and #116
         }
