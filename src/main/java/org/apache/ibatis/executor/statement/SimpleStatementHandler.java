@@ -33,6 +33,7 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 
 /**
+ * 该类的作用是使用数据库的Statement或PreparedStatement执行SQL语句
  * @author Clinton Begin
  */
 public class SimpleStatementHandler extends BaseStatementHandler {
@@ -70,8 +71,11 @@ public class SimpleStatementHandler extends BaseStatementHandler {
 
   @Override
   public <E> List<E> query(Statement statement, ResultHandler resultHandler) throws SQLException {
+    //获取SQL语句
     String sql = boundSql.getSql();
+    //执行SQL语句
     statement.execute(sql);
+    //使用ResultSetHandler进行结果集封装
     return resultSetHandler.handleResultSets(statement);
   }
 

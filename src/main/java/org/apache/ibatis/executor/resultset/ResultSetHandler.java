@@ -23,14 +23,18 @@ import java.util.List;
 import org.apache.ibatis.cursor.Cursor;
 
 /**
+ * 对数据库返回的结果集进行封装，DefaultResultSetHandler是其实现类
  * @author Clinton Begin
  */
 public interface ResultSetHandler {
 
+  //处理结果集
   <E> List<E> handleResultSets(Statement stmt) throws SQLException;
 
+  //处理游标
   <E> Cursor<E> handleCursorResultSets(Statement stmt) throws SQLException;
 
+  //处理输出参数
   void handleOutputParameters(CallableStatement cs) throws SQLException;
 
 }

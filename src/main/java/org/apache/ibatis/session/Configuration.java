@@ -658,7 +658,18 @@ public class Configuration {
     return resultSetHandler;
   }
 
+  /**
+   * 根据SQL标签中配置statementType来创建不同的StatementHandler实现
+   * @param executor
+   * @param mappedStatement
+   * @param parameterObject
+   * @param rowBounds
+   * @param resultHandler
+   * @param boundSql
+   * @return
+   */
   public StatementHandler newStatementHandler(Executor executor, MappedStatement mappedStatement, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
+    //创建Statement，RoutingStatementHandler使用静态代理模式，由statementType来指定真实的StatementHandler实现
     StatementHandler statementHandler = new RoutingStatementHandler(executor, mappedStatement, parameterObject, rowBounds, resultHandler, boundSql);
     statementHandler = (StatementHandler) interceptorChain.pluginAll(statementHandler);
     return statementHandler;

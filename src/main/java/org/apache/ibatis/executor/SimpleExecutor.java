@@ -59,9 +59,9 @@ public class SimpleExecutor extends BaseExecutor {
     Statement stmt = null;
     try {
       Configuration configuration = ms.getConfiguration();
-      //创建StatementHandler对象
+      //根据SQL标签中配置statementType来创建不同的StatementHandler实现
       StatementHandler handler = configuration.newStatementHandler(wrapper, ms, parameter, rowBounds, resultHandler, boundSql);
-      //StatementHandler对象创建stm，并使用parameterHandler对占位服务进行处理
+      //创建Statement，并使用parameterHandler对占位符进行处理
       stmt = prepareStatement(handler, ms.getStatementLog());
       //通过statementHandler对象调用ResultSetHandler将结果集转化为指定对象返回
       return handler.query(stmt, resultHandler);
@@ -91,6 +91,7 @@ public class SimpleExecutor extends BaseExecutor {
     Connection connection = getConnection(statementLog);
     //试图创建带有日志功能PreparedStatement，也就是PreparedStatementLogger
     stmt = handler.prepare(connection, transaction.getTimeout());
+    //设置参数值
     handler.parameterize(stmt);
     return stmt;
   }

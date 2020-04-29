@@ -23,6 +23,7 @@ import org.apache.ibatis.session.ResultContext;
 import org.apache.ibatis.session.ResultHandler;
 
 /**
+ * 在进行结果集封装过程中，结果的暂存区
  * @author Clinton Begin
  */
 public class DefaultResultHandler implements ResultHandler<Object> {

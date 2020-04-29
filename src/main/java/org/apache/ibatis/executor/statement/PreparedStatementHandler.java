@@ -61,7 +61,9 @@ public class PreparedStatementHandler extends BaseStatementHandler {
   @Override
   public <E> List<E> query(Statement statement, ResultHandler resultHandler) throws SQLException {
     PreparedStatement ps = (PreparedStatement) statement;
+    //执行SQL语句
     ps.execute();
+    //封装结果集并返回对象
     return resultSetHandler.handleResultSets(ps);
   }
 
@@ -85,12 +87,15 @@ public class PreparedStatementHandler extends BaseStatementHandler {
     } else if (mappedStatement.getResultSetType() == ResultSetType.DEFAULT) {
       return connection.prepareStatement(sql);
     } else {
+      //如果配置了MyBatis日志输出，则此处的Connection是经过ConnectionLogger装饰的对象，
+      //它调用connection.prepareStatement时会输出SQL语句，并返回被装饰的PreparedStatement
       return connection.prepareStatement(sql, mappedStatement.getResultSetType().getValue(), ResultSet.CONCUR_READ_ONLY);
     }
   }
 
   @Override
   public void parameterize(Statement statement) throws SQLException {
+    //设置参数值
     parameterHandler.setParameters((PreparedStatement) statement);
   }
 
