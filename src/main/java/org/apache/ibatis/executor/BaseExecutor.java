@@ -170,7 +170,7 @@ public abstract class BaseExecutor implements Executor {
       //查询一级缓存
       list = resultHandler == null ? (List<E>) localCache.getObject(key) : null;
       if (list != null) {
-        //处理一级缓存中的输出参数（存储过程）
+        //缓存命中，处理一级缓存中的输出参数（存储过程）
         handleLocallyCachedOutputParameters(ms, key, parameter, boundSql);
       } else {
         //缓存未命中，从数据库加载数据，并将结果放入以及缓存

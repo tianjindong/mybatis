@@ -41,6 +41,8 @@ import org.apache.ibatis.session.SqlSession;
 /**
  * 封装Mapper接口中对应方法的信息，以及对应的SQL语句的信息；它是Mapper接口与映射配置文件中SQL语句的桥梁
  * MapperMethod也是MyBatis最终调用SqlSession中操作数据库方法（selectOne等）的地方，具体请看execute方法
+ *
+ * MapperMethod对象不记录任何状态信息，所以它可以在多个代理对象之间共享；
  * @author Clinton Begin
  * @author Eduardo Macarron
  * @author Lasse Voss
