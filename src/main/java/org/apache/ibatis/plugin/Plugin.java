@@ -26,12 +26,16 @@ import java.util.Set;
 import org.apache.ibatis.reflection.ExceptionUtil;
 
 /**
+ * 插件实现的代理类，是插件进行区别拦截的核心逻辑实现。用于代理用户自定义实现的Interceptor实例
  * @author Clinton Begin
  */
 public class Plugin implements InvocationHandler {
 
+  //封装的真正提供服务的对象
   private final Object target;
+  //自定义拦截器
   private final Interceptor interceptor;
+  //解析@Intercepts注解得到的signature信息
   private final Map<Class<?>, Set<Method>> signatureMap;
 
   private Plugin(Object target, Interceptor interceptor, Map<Class<?>, Set<Method>> signatureMap) {
@@ -45,6 +49,7 @@ public class Plugin implements InvocationHandler {
     Class<?> type = target.getClass();
     Class<?>[] interfaces = getAllInterfaces(type, signatureMap);
     if (interfaces.length > 0) {
+      //生成动态代理对象
       return Proxy.newProxyInstance(
           type.getClassLoader(),
           interfaces,
@@ -58,6 +63,7 @@ public class Plugin implements InvocationHandler {
     try {
       Set<Method> methods = signatureMap.get(method.getDeclaringClass());
       if (methods != null && methods.contains(method)) {
+        //当前被调用的method如果包含在用户指定拦截的methods中，则进行拦截
         return interceptor.intercept(new Invocation(target, method, args));
       }
       return method.invoke(target, args);

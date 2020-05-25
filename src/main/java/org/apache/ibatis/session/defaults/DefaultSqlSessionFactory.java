@@ -105,6 +105,7 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
       //从数据源中获取数据库连接，然后创建Transaction对象
       tx = transactionFactory.newTransaction(environment.getDataSource(), level, autoCommit);
       //重点：根据配置创建Executor，该方法内部会根据用户是否配置二级缓存去决定是否创建二级缓存的装饰器去装饰Executor，这也是二级缓存是否生效的关键
+      //在这里面实际上还有插件的实现逻辑
       final Executor executor = configuration.newExecutor(tx, execType);
       //创建DefaultSqlSession
       return new DefaultSqlSession(configuration, executor, autoCommit);

@@ -645,15 +645,34 @@ public class Configuration {
     return MetaObject.forObject(object, objectFactory, objectWrapperFactory, reflectorFactory);
   }
 
+  /**
+   * 创建ParameterHandler对象，如果配置了插件，则会在这里使用动态代理加强ParameterHandler
+   * @param mappedStatement
+   * @param parameterObject
+   * @param boundSql
+   * @return
+   */
   public ParameterHandler newParameterHandler(MappedStatement mappedStatement, Object parameterObject, BoundSql boundSql) {
     ParameterHandler parameterHandler = mappedStatement.getLang().createParameterHandler(mappedStatement, parameterObject, boundSql);
+    //注册插件，从而加强ParameterHandler对象
     parameterHandler = (ParameterHandler) interceptorChain.pluginAll(parameterHandler);
     return parameterHandler;
   }
 
+  /**
+   * 创建ResultSetHandler对象，如果配置了插件，则会在这里使用动态代理加强ResultSetHandler
+   * @param executor
+   * @param mappedStatement
+   * @param rowBounds
+   * @param parameterHandler
+   * @param resultHandler
+   * @param boundSql
+   * @return
+   */
   public ResultSetHandler newResultSetHandler(Executor executor, MappedStatement mappedStatement, RowBounds rowBounds, ParameterHandler parameterHandler,
       ResultHandler resultHandler, BoundSql boundSql) {
     ResultSetHandler resultSetHandler = new DefaultResultSetHandler(executor, mappedStatement, parameterHandler, resultHandler, boundSql, rowBounds);
+    //注册插件，从而加强ResultSetHandler对象
     resultSetHandler = (ResultSetHandler) interceptorChain.pluginAll(resultSetHandler);
     return resultSetHandler;
   }
@@ -697,6 +716,7 @@ public class Configuration {
       //如果配置了二级缓存，则用CachingExecutor装饰前面创建的Executor，从而实现二级缓存
       executor = new CachingExecutor(executor);
     }
+    //通过interceptorChain遍历所有注册的插件，然后对Executor进行加强
     executor = (Executor) interceptorChain.pluginAll(executor);
     return executor;
   }
